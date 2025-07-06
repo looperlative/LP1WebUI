@@ -40,7 +40,15 @@ const DEVICE_HOSTNAME = 'pipad';
 const DEVICE_IP = '192.168.1.26';
 // Device server port
 const LP_SERVER_PORT = 5667;
+// Connection timeout in milliseconds (5 seconds)
+const CONNECTION_TIMEOUT = 5000;
+// Reconnection interval in milliseconds (1 second)
+const RECONNECTION_INTERVAL = 1000;
+
 let lpAddress = null;
+let lastStatusTime = 0;
+let reconnectionTimer = null;
+let connectionCheckTimer = null;
 let lpStatus = {
     status: Array(8).fill(0),
     level: Array(8).fill(0),
@@ -95,6 +103,39 @@ function findLooperlative() {
     // Try multiple approaches to find the device
     tryDirectConnection();
     tryBroadcastDiscovery();
+}
+
+// Function to check if device connection has timed out
+function checkConnectionTimeout() {
+    if (lpAddress && (Date.now() - lastStatusTime > CONNECTION_TIMEOUT)) {
+        console.log('Device connection timed out - no status received for 5 seconds');
+        // Clear device address and notify clients
+        lpAddress = null;
+        io.emit('device_not_found');
+
+        // Start reconnection attempts
+        startReconnectionTimer();
+    }
+}
+
+// Function to start reconnection timer
+function startReconnectionTimer() {
+    // Clear any existing timer
+    if (reconnectionTimer) {
+        clearInterval(reconnectionTimer);
+    }
+
+    // Start new reconnection timer
+    reconnectionTimer = setInterval(() => {
+        if (!lpAddress) {
+            console.log('Attempting to reconnect to device...');
+            findLooperlative();
+        } else {
+            // If we're connected, stop the reconnection timer
+            clearInterval(reconnectionTimer);
+            reconnectionTimer = null;
+        }
+    }, RECONNECTION_INTERVAL);
 }
 
 // Try to connect directly to the device using hostname and confirmed IP
@@ -195,7 +236,7 @@ function parseIPStatus(buffer) {
         }
 
 	if (buffer[0] === 0xf0) {
-	    console.warn("Unhandled Sysex packet received");
+	    //console.warn("Unhandled Sysex packet received");
 	    return;
 	}
 
@@ -328,6 +369,15 @@ udpSocket.on('message', (msg, rinfo) => {
                     lpAddress = rinfo.address;
                     console.log(`Found Looperlative device at ${lpAddress} with ID: ${deviceId}`);
 
+                    // Update last status time
+                    lastStatusTime = Date.now();
+
+                    // Stop reconnection timer if it's running
+                    if (reconnectionTimer) {
+                        clearInterval(reconnectionTimer);
+                        reconnectionTimer = null;
+                    }
+
                     // Notify all connected clients
                     io.emit('device_found', { address: lpAddress, id: deviceId });
 
@@ -337,9 +387,13 @@ udpSocket.on('message', (msg, rinfo) => {
             } else if (textContent.includes('<status>') || textContent.includes('<track>')) {
                 // This is a status response
                 parseIPStatus(msg);
+                // Update last status time
+                lastStatusTime = Date.now();
             } else if (rinfo.address === lpAddress) {
                 // Any other message from our device
                 parseIPStatus(msg);
+                // Update last status time
+                lastStatusTime = Date.now();
             }
         }
     } catch (err) {
@@ -355,7 +409,18 @@ udpSocket.on('error', (err) => {
 
 // Start the server
 server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
+
+    // Start the connection check timer
+    connectionCheckTimer = setInterval(checkConnectionTimeout, 1000);
+
+    // Start initial device discovery
+    findLooperlative();
+
+    // Start reconnection timer if not connected
+    if (!lpAddress) {
+        startReconnectionTimer();
+    }
 
     // Periodically request status updates if we have a device
     setInterval(() => {
