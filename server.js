@@ -17,9 +17,6 @@ const udpSocket = dgram.createSocket('udp4');
 udpSocket.bind(() => {
     udpSocket.setBroadcast(true);
     console.log('UDP socket ready and broadcast enabled');
-
-    // Start device discovery immediately after binding
-    findLooperlative();
 });
 
 // Add more detailed UDP socket event handlers
@@ -35,10 +32,6 @@ udpSocket.on('error', (err) => {
 // Constants
 const PORT = 3000;
 const BROADCAST_ADDR = '255.255.255.255';
-const DEVICE_HOSTNAME = 'pipad';
-// Confirmed device IP address
-const DEVICE_IP = '192.168.1.26';
-// Device server port
 const LP_SERVER_PORT = 5667;
 // Connection timeout in milliseconds (5 seconds)
 const CONNECTION_TIMEOUT = 5000;
@@ -99,9 +92,6 @@ io.on('connection', (socket) => {
 // Function to find the Looperlative device on the network
 function findLooperlative() {
     console.log('Connecting to Looperlative device...');
-
-    // Try multiple approaches to find the device
-    tryDirectConnection();
     tryBroadcastDiscovery();
 }
 
@@ -136,40 +126,6 @@ function startReconnectionTimer() {
             reconnectionTimer = null;
         }
     }, RECONNECTION_INTERVAL);
-}
-
-// Try to connect directly to the device using hostname and confirmed IP
-function tryDirectConnection() {
-    console.log('Trying direct connection to device...');
-
-    // Try the confirmed IP address first (most reliable)
-    console.log('Trying confirmed IP address:', DEVICE_IP);
-    tryConnectToHost(DEVICE_IP);
-
-    // Also try the hostname as backup
-    setTimeout(() => {
-        if (!lpAddress) {
-            console.log('Trying hostname:', DEVICE_HOSTNAME);
-            tryConnectToHost(DEVICE_HOSTNAME);
-        }
-    }, 2000);
-}
-
-// Try to connect to a specific host
-function tryConnectToHost(host) {
-    console.log(`Attempting connection to: ${host}`);
-
-    // Send a direct discovery message
-    // Using the correct XML format for discovery as per IPLooperlative.cpp
-    const discoveryMsg = Buffer.from('<query>id</query>', 'ascii');
-
-    udpSocket.send(discoveryMsg, 0, discoveryMsg.length, LP_SERVER_PORT, host, (err) => {
-        if (err) {
-            console.error(`Error sending discovery to ${host}:`, err.message);
-        } else {
-            console.log(`Discovery message sent to ${host}:${LP_SERVER_PORT}`);
-        }
-    });
 }
 
 // Try broadcast discovery as a fallback
@@ -246,51 +202,28 @@ function parseIPStatus(buffer) {
             // Read num_tracks to verify format
             const numTracks = buffer.readInt32BE(4); // second int is num_tracks
 
-            if (numTracks === 8) { // Valid number of tracks
-                // Structure offsets based on control_compact_status
-                const trackCount = 8;
-
-                // Update our status object
+            if (numTracks === 8 &&  buffer.length >= (8 + (numTracks * 28))) {
                 lpStatus.ntracks = numTracks;
 
                 // Parse track data
-                for (let i = 0; i < trackCount; i++) {
+                for (let i = 0; i < numTracks; i++) {
                     // Offsets for each array in the struct
                     // Each int is 4 bytes
                     const stateOffset = 8 + (i * 4);  // 8 = sample_rate + num_tracks
-                    const lengthOffset = 8 + (trackCount * 4) + (i * 4);
-                    const positionOffset = 8 + (trackCount * 8) + (i * 4);
-                    const levelOffset = 8 + (trackCount * 12) + (i * 4);
-                    const panOffset = 8 + (trackCount * 16) + (i * 4);
-                    const feedbackOffset = 8 + (trackCount * 20) + (i * 4);
-                    const selectedOffset = 8 + (trackCount * 24) + (i * 4);
+                    const lengthOffset = 8 + (numTracks * 4) + (i * 4);
+                    const positionOffset = 8 + (numTracks * 8) + (i * 4);
+                    const levelOffset = 8 + (numTracks * 12) + (i * 4);
+                    const panOffset = 8 + (numTracks * 16) + (i * 4);
+                    const feedbackOffset = 8 + (numTracks * 20) + (i * 4);
+                    const selectedOffset = 8 + (numTracks * 24) + (i * 4);
 
-		    if (lengthOffset + 4 <= buffer.length) {
-			lpStatus.length[i] = buffer.readInt32BE(lengthOffset);
-		    }
-
-		    if (positionOffset + 4 <= buffer.length) {
-			lpStatus.position[i] = buffer.readInt32BE(positionOffset);
-		    }
-
-                    if (stateOffset + 4 <= buffer.length) {
-                        lpStatus.status[i] = buffer.readInt32BE(stateOffset);
-                    }
-
-                    if (levelOffset + 4 <= buffer.length) {
-                        lpStatus.level[i] = buffer.readInt32BE(levelOffset);
-                    }
-
-                    if (panOffset + 4 <= buffer.length) {
-                        lpStatus.pan[i] = buffer.readInt32BE(panOffset);
-                    }
-
-                    if (feedbackOffset + 4 <= buffer.length) {
-                        lpStatus.feedback[i] = buffer.readInt32BE(feedbackOffset);
-                    }
-
-                    // Update selected track
-                    if (selectedOffset + 4 <= buffer.length && buffer.readInt32BE(selectedOffset)) {
+		    lpStatus.length[i] = buffer.readInt32BE(lengthOffset);
+		    lpStatus.position[i] = buffer.readInt32BE(positionOffset);
+                    lpStatus.status[i] = buffer.readInt32BE(stateOffset);
+                    lpStatus.level[i] = buffer.readInt32BE(levelOffset);
+                    lpStatus.pan[i] = buffer.readInt32BE(panOffset);
+                    lpStatus.feedback[i] = buffer.readInt32BE(feedbackOffset);
+                    if (buffer.readInt32BE(selectedOffset)) {
                         lpStatus.selected = i;
                     }
                 }
