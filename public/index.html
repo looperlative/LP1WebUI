@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Looperlative Controller</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+        <div class="status-section">
+            <div id="status-message">No device connected</div>
+            <div id="error-message"></div>
+        </div>
+
+        <div class="tracks-section">
+            <div class="tracks-grid">
+                <!-- 8 tracks in a row, each with multiple properties -->
+                <!-- Track 1 -->
+                <div class="track-column">
+                    <div class="track-name">Track 1</div>
+                    <div class="track-status" id="track-1-status">empty</div>
+                    <div class="track-length" id="track-1-length">0</div>
+                    <div class="track-position" id="track-1-position">0</div>
+                    <div class="track-level" id="track-1-level">0</div>
+                    <div class="track-feedback" id="track-1-feedback">100</div>
+                    <div class="track-pan" id="track-1-pan">0</div>
+                </div>
+                <!-- Track 2 -->
+                <div class="track-column">
+                    <div class="track-name">Track 2</div>
+                    <div class="track-status" id="track-2-status">empty</div>
+                    <div class="track-length" id="track-2-length">0</div>
+                    <div class="track-position" id="track-2-position">0</div>
+                    <div class="track-level" id="track-2-level">0</div>
+                    <div class="track-feedback" id="track-2-feedback">100</div>
+                    <div class="track-pan" id="track-2-pan">0</div>
+                </div>
+                <!-- Track 3 -->
+                <div class="track-column">
+                    <div class="track-name">Track 3</div>
+                    <div class="track-status" id="track-3-status">empty</div>
+                    <div class="track-length" id="track-3-length">0</div>
+                    <div class="track-position" id="track-3-position">0</div>
+                    <div class="track-level" id="track-3-level">0</div>
+                    <div class="track-feedback" id="track-3-feedback">100</div>
+                    <div class="track-pan" id="track-3-pan">0</div>
+                </div>
+                <!-- Track 4 -->
+                <div class="track-column">
+                    <div class="track-name">Track 4</div>
+                    <div class="track-status" id="track-4-status">empty</div>
+                    <div class="track-length" id="track-4-length">0</div>
+                    <div class="track-position" id="track-4-position">0</div>
+                    <div class="track-level" id="track-4-level">0</div>
+                    <div class="track-feedback" id="track-4-feedback">100</div>
+                    <div class="track-pan" id="track-4-pan">0</div>
+                </div>
+                <!-- Track 5 -->
+                <div class="track-column">
+                    <div class="track-name">Track 5</div>
+                    <div class="track-status" id="track-5-status">empty</div>
+                    <div class="track-length" id="track-5-length">0</div>
+                    <div class="track-position" id="track-5-position">0</div>
+                    <div class="track-level" id="track-5-level">0</div>
+                    <div class="track-feedback" id="track-5-feedback">100</div>
+                    <div class="track-pan" id="track-5-pan">0</div>
+                </div>
+                <!-- Track 6 -->
+                <div class="track-column">
+                    <div class="track-name">Track 6</div>
+                    <div class="track-status" id="track-6-status">empty</div>
+                    <div class="track-length" id="track-6-length">0</div>
+                    <div class="track-position" id="track-6-position">0</div>
+                    <div class="track-level" id="track-6-level">0</div>
+                    <div class="track-feedback" id="track-6-feedback">100</div>
+                    <div class="track-pan" id="track-6-pan">0</div>
+                </div>
+                <!-- Track 7 -->
+                <div class="track-column">
+                    <div class="track-name">Track 7</div>
+                    <div class="track-status" id="track-7-status">empty</div>
+                    <div class="track-length" id="track-7-length">0</div>
+                    <div class="track-position" id="track-7-position">0</div>
+                    <div class="track-level" id="track-7-level">0</div>
+                    <div class="track-feedback" id="track-7-feedback">100</div>
+                    <div class="track-pan" id="track-7-pan">0</div>
+                </div>
+                <!-- Track 8 -->
+                <div class="track-column">
+                    <div class="track-name">Track 8</div>
+                    <div class="track-status" id="track-8-status">empty</div>
+                    <div class="track-length" id="track-8-length">0</div>
+                    <div class="track-position" id="track-8-position">0</div>
+                    <div class="track-level" id="track-8-level">0</div>
+                    <div class="track-feedback" id="track-8-feedback">100</div>
+                    <div class="track-pan" id="track-8-pan">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="midi-section">
+            <div class="midi-label">Midi Button:</div>
+            <div class="midi-controls">
+                <select id="midi-msg-type" class="config-select">
+                    <option value="1">Pgm Change</option>
+                    <option value="2">CC</option>
+                    <option value="3">Note</option>
+                </select>
+                <select id="midi-msg-number" class="config-select">
+                    <!-- Will be populated with numbers 0-127 -->
+                </select>
+            </div>
+        </div>
+
+        <div class="function-section">
+            <div class="function-grid">
+                <!-- 8 function selectors in a row -->
+                <div class="function-column">
+                    <div class="function-label">Function 1</div>
+                    <select id="function-1" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 2</div>
+                    <select id="function-2" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 3</div>
+                    <select id="function-3" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 4</div>
+                    <select id="function-4" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 5</div>
+                    <select id="function-5" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 6</div>
+                    <select id="function-6" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 7</div>
+                    <select id="function-7" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+                <div class="function-column">
+                    <div class="function-label">Function 8</div>
+                    <select id="function-8" class="function-select">
+                        <!-- Will be populated with function options -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="controller-section">
+            <div class="controller-grid">
+                <div class="controller-column">
+                    <div class="controller-label">Controller Func</div>
+                    <select id="controller-func" class="controller-select">
+                        <!-- Will be populated with controller function options -->
+                    </select>
+                </div>
+                <div class="controller-column">
+                    <div class="controller-label">Controller Min</div>
+                    <select id="controller-min" class="controller-select">
+                        <!-- Will be populated with values 0-127 -->
+                    </select>
+                </div>
+                <div class="controller-column">
+                    <div class="controller-label">Controller Max</div>
+                    <select id="controller-max" class="controller-select">
+                        <!-- Will be populated with values 0-127 -->
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-section">
+            <div class="config-grid">
+                <div class="config-column">
+                    <div class="config-label">LP2 Display Brightness</div>
+                    <select id="brightness" class="config-select">
+                        <option value="1">High</option>
+                        <option value="2">Medium</option>
+                        <option value="3">Low</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">LP2 Display Mode</div>
+                    <select id="display-mode" class="config-select">
+                        <option value="1">Original</option>
+                        <option value="2">New</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">MIDI Channel</div>
+                    <select id="midi-channel" class="config-select">
+                        <!-- Will be populated with channels 1-16 -->
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">MIDI In Clock Mode</div>
+                    <select id="midi-in-clock" class="config-select">
+                        <option value="1">Allow</option>
+                        <option value="2">Ignore</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">MIDI Out Clock Mode</div>
+                    <select id="midi-out-clock" class="config-select">
+                        <option value="1">Off</option>
+                        <option value="2">On</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Noise Gate Level</div>
+                    <select id="noise-gate" class="config-select">
+                        <option value="1">Off</option>
+                        <option value="2">9</option>
+                        <option value="3">10</option>
+                        <option value="4">11</option>
+                        <option value="5">12</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Main Level</div>
+                    <select id="main-level" class="config-select">
+                        <option value="1">-4</option>
+                        <option value="2">-3</option>
+                        <option value="3">-2</option>
+                        <option value="4">-1</option>
+                        <option value="5">0</option>
+                        <option value="6">1</option>
+                        <option value="7">2</option>
+                        <option value="8">3</option>
+                        <option value="9">4</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Mono Input</div>
+                    <select id="mono-input" class="config-select">
+                        <option value="1">Stereo</option>
+                        <option value="2">Mono</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">MIDI BPM</div>
+                    <select id="midi-bpm" class="config-select">
+                        <!-- Will be populated with values 4-64 -->
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Output</div>
+                    <select id="wet-dry" class="config-select">
+                        <option value="1">Wet+Dry</option>
+                        <option value="2">Wet Only</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Pedal Catch</div>
+                    <select id="pedal-catch" class="config-select">
+                        <option value="1">Off</option>
+                        <option value="2">On</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Volume Fade Min</div>
+                    <select id="volume-fade-min" class="config-select">
+                        <option value="128">-128</option>
+                        <option value="120">-120</option>
+                        <option value="110">-110</option>
+                        <option value="100">-100</option>
+                        <option value="90">-90</option>
+                        <option value="80">-80</option>
+                        <option value="70">-70</option>
+                        <option value="60">-60</option>
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Volume Fade Time</div>
+                    <select id="volume-fade-time" class="config-select">
+                        <!-- Will be populated with values 1-99 -->
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Random Restart Min</div>
+                    <select id="random-restart-min" class="config-select">
+                        <!-- Will be populated with values 0-5 -->
+                    </select>
+                </div>
+                <div class="config-column">
+                    <div class="config-label">Random Restart Max</div>
+                    <select id="random-restart-max" class="config-select">
+                        <!-- Will be populated with values 1-20 -->
+                    </select>
+                </div>
+            </div>
+        </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
