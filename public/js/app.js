@@ -68,118 +68,9 @@ function initUI() {
         mainLevel.appendChild(option);
     }
 
-    // Create track UI
-    createTrackUI();
-
     // Add event listeners to buttons
     midiMsgType.addEventListener('change', handleMidiMsgTypeChange);
     midiMsgNumber.addEventListener('change', handleMidiMsgNumberChange);
-}
-
-// Create the track UI elements
-function createTrackUI() {
-    for (let i = 0; i < lpStatus.ntracks; i++) {
-        const track = document.createElement('div');
-        track.className = 'track';
-        track.id = `track-${i}`;
-        if (i === lpStatus.selected) {
-            track.classList.add('selected');
-        }
-
-        // Track header
-        const header = document.createElement('div');
-        header.className = 'track-header';
-
-        const title = document.createElement('div');
-        title.className = 'track-title';
-        title.textContent = `Track ${i + 1}`;
-
-        const status = document.createElement('div');
-        status.className = 'track-status';
-        status.id = `track-${i}-status`;
-        status.textContent = STATUS_LABELS[lpStatus.status[i]] || 'Unknown';
-        status.classList.add(STATUS_LABELS[lpStatus.status[i]].toLowerCase());
-
-        header.appendChild(title);
-        header.appendChild(status);
-        track.appendChild(header);
-
-        // Track controls
-        const controls = document.createElement('div');
-        controls.className = 'track-controls';
-
-        // Level slider
-        const levelGroup = document.createElement('div');
-        levelGroup.className = 'track-slider-group';
-
-        const levelLabel = document.createElement('div');
-        levelLabel.className = 'track-slider-label';
-        levelLabel.innerHTML = '<span>Level:</span><span id="track-' + i + '-level-value">' + lpStatus.level[i] + '</span>';
-
-        const levelSlider = document.createElement('input');
-        levelSlider.type = 'range';
-        levelSlider.className = 'track-slider';
-        levelSlider.min = '-40';
-        levelSlider.max = '0';
-        levelSlider.value = lpStatus.level[i];
-        levelSlider.id = `track-${i}-level`;
-        levelSlider.dataset.track = i;
-        levelSlider.dataset.param = 'level';
-        levelSlider.addEventListener('input', handleTrackParamChange);
-
-        levelGroup.appendChild(levelLabel);
-        levelGroup.appendChild(levelSlider);
-        controls.appendChild(levelGroup);
-
-        // Pan slider
-        const panGroup = document.createElement('div');
-        panGroup.className = 'track-slider-group';
-
-        const panLabel = document.createElement('div');
-        panLabel.className = 'track-slider-label';
-        panLabel.innerHTML = '<span>Pan:</span><span id="track-' + i + '-pan-value">' + lpStatus.pan[i] + '</span>';
-
-        const panSlider = document.createElement('input');
-        panSlider.type = 'range';
-        panSlider.className = 'track-slider';
-        panSlider.min = '-64';
-        panSlider.max = '63';
-        panSlider.value = lpStatus.pan[i];
-        panSlider.id = `track-${i}-pan`;
-        panSlider.dataset.track = i;
-        panSlider.dataset.param = 'pan';
-        panSlider.addEventListener('input', handleTrackParamChange);
-
-        panGroup.appendChild(panLabel);
-        panGroup.appendChild(panSlider);
-        controls.appendChild(panGroup);
-
-        // Feedback slider
-        const feedbackGroup = document.createElement('div');
-        feedbackGroup.className = 'track-slider-group';
-
-        const feedbackLabel = document.createElement('div');
-        feedbackLabel.className = 'track-slider-label';
-        feedbackLabel.innerHTML = '<span>Feedback:</span><span id="track-' + i + '-feedback-value">' + lpStatus.feedback[i] + '</span>';
-
-        const feedbackSlider = document.createElement('input');
-        feedbackSlider.type = 'range';
-        feedbackSlider.className = 'track-slider';
-        feedbackSlider.min = '0';
-        feedbackSlider.max = '100';
-        feedbackSlider.value = lpStatus.feedback[i];
-        feedbackSlider.id = `track-${i}-feedback`;
-        feedbackSlider.dataset.track = i;
-        feedbackSlider.dataset.param = 'feedback';
-        feedbackSlider.addEventListener('input', handleTrackParamChange);
-
-        feedbackGroup.appendChild(feedbackLabel);
-        feedbackGroup.appendChild(feedbackSlider);
-        controls.appendChild(feedbackGroup);
-
-        // Track buttons
-        track.appendChild(controls);
-    }
 }
 
 // Helper function to create a button
@@ -197,8 +88,12 @@ function createButton(text, className, trackIndex, action) {
 function updateUI() {
     // Update track status and controls
     for (let i = 0; i < lpStatus.ntracks; i++) {
-        const track = document.getElementById(`track-${i}`);
-        if (!track) continue;
+	const tracknum = i + 1;
+        const track = document.getElementById(`track-${tracknum}`);
+        if (!track) {
+	    console.log('Could not find track ' + tracknum);
+	    continue;
+	}
 
         // Update selected state
         if (i === lpStatus.selected) {
@@ -208,27 +103,34 @@ function updateUI() {
         }
 
         // Update status
-        const statusEl = document.getElementById(`track-${i}-status`);
+        const statusEl = document.getElementById(`track-${tracknum}-status`);
         if (statusEl) {
             const statusText = STATUS_LABELS[lpStatus.status[i]] || 'Unknown';
             statusEl.textContent = statusText;
             statusEl.className = 'track-status ' + statusText.toLowerCase();
         }
 
-        // Update sliders and values
-        updateSliderValue(`track-${i}-level`, lpStatus.level[i]);
-        updateSliderValue(`track-${i}-pan`, lpStatus.pan[i]);
-        updateSliderValue(`track-${i}-feedback`, lpStatus.feedback[i]);
+        document.getElementById(`track-${tracknum}-length`).textContent =
+	    formatSamples(lpStatus.length[i] || 0);
+        document.getElementById(`track-${tracknum}-position`).textContent =
+	    formatSamples(lpStatus.position[i] || 0);
+        document.getElementById(`track-${tracknum}-level`).textContent =
+	    lpStatus.level[i] || 0;
+        document.getElementById(`track-${tracknum}-pan`).textContent =
+	    lpStatus.pan[i] || 0;
+        document.getElementById(`track-${tracknum}-feedback`).textContent =
+	    lpStatus.feedback[i] || 10;
     }
 }
 
-// Helper function to update a slider value
-function updateSliderValue(id, value) {
-    const slider = document.getElementById(id);
-    const valueEl = document.getElementById(`${id}-value`);
-
-    if (slider) slider.value = value;
-    if (valueEl) valueEl.textContent = value;
+function formatSamples(samples) {
+    // Format sample count to be more readable
+    if (samples >= 1000000) {
+        return (samples / 1000000).toFixed(2) + 'M';
+    } else if (samples >= 1000) {
+        return (samples / 1000).toFixed(1) + 'k';
+    }
+    return samples;
 }
 
 // Socket.IO event handlers
@@ -245,7 +147,7 @@ socket.on('disconnect', () => {
 });
 
 socket.on('status', (status) => {
-    console.log('Received status update:', status);
+    //console.log('Received status update:', status);
     if (status) {
         lpStatus = status;
         updateUI();

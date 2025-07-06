@@ -20,9 +20,6 @@ udpSocket.bind(() => {
 
     // Start device discovery immediately after binding
     findLooperlative();
-
-    // Set up periodic discovery attempts
-    setInterval(findLooperlative, 10000); // Try every 10 seconds
 });
 
 // Add more detailed UDP socket event handlers
@@ -183,9 +180,7 @@ function sendCommandToDevice(cmd) {
     udpSocket.send(cmdBuffer, 0, cmdBuffer.length, LP_SERVER_PORT, lpAddress, (err) => {
         if (err) {
             console.error('Error sending command:', err);
-        } else {
-            console.log(`Command '${xmlCmd}' sent to ${lpAddress}:${LP_SERVER_PORT}`);
-        }
+	}
     });
 }
 
@@ -195,16 +190,18 @@ function parseIPStatus(buffer) {
         // First check if it's XML format (for backward compatibility)
         const dataStr = buffer.toString('ascii', 0, Math.min(20, buffer.length));
         if (dataStr.includes('<status>') || dataStr.includes('<track>')) {
-            console.log('Parsing XML status data (legacy format)');
             parseXmlStatus(buffer);
             return;
         }
 
+	if (buffer[0] === 0xf0) {
+	    console.warn("Unhandled Sysex packet received");
+	    return;
+	}
+
         // Try to parse as binary compact status format
         // Based on the control_compact_status struct in IPLooperlative.h
         if (buffer.length >= 8) { // Need at least sample_rate + num_tracks (8 bytes)
-            console.log('Parsing binary compact status data');
-
             // Read num_tracks to verify format
             const numTracks = buffer.readInt32BE(4); // second int is num_tracks
 
@@ -227,6 +224,14 @@ function parseIPStatus(buffer) {
                     const feedbackOffset = 8 + (trackCount * 20) + (i * 4);
                     const selectedOffset = 8 + (trackCount * 24) + (i * 4);
 
+		    if (lengthOffset + 4 <= buffer.length) {
+			lpStatus.length[i] = buffer.readInt32BE(lengthOffset);
+		    }
+
+		    if (positionOffset + 4 <= buffer.length) {
+			lpStatus.position[i] = buffer.readInt32BE(positionOffset);
+		    }
+
                     if (stateOffset + 4 <= buffer.length) {
                         lpStatus.status[i] = buffer.readInt32BE(stateOffset);
                     }
@@ -248,13 +253,11 @@ function parseIPStatus(buffer) {
                         lpStatus.selected = i;
                     }
                 }
-
-                console.log('Successfully parsed compact status data');
             } else {
-                console.log('Invalid track count in compact status:', numTracks);
+                console.warn('Invalid track count in compact status:', numTracks);
             }
         } else {
-            console.log('Buffer too small for compact status format');
+            console.warn('Buffer too small for compact status format');
         }
 
         // Update status and notify clients
@@ -311,11 +314,8 @@ function parseXmlStatus(buffer) {
 
 // UDP message handling
 udpSocket.on('message', (msg, rinfo) => {
-    console.log(`Received UDP message from ${rinfo.address}:${rinfo.port}, length: ${msg.length}`);
-
     try {
         const textContent = msg.toString('ascii');
-        console.log(`Message as text: ${textContent.substring(0, 50)}...`);
 
         // If this is a response to our discovery message
         if (rinfo.port === LP_SERVER_PORT) {
@@ -339,7 +339,6 @@ udpSocket.on('message', (msg, rinfo) => {
                 parseIPStatus(msg);
             } else if (rinfo.address === lpAddress) {
                 // Any other message from our device
-                console.log('Received other message from device');
                 parseIPStatus(msg);
             }
         }
@@ -361,8 +360,7 @@ server.listen(PORT, () => {
     // Periodically request status updates if we have a device
     setInterval(() => {
         if (lpAddress) {
-            console.log(`Requesting status update from ${lpAddress}`);
             sendCommandToDevice('STATUS');
         }
-    }, 5000); // Every 5 seconds
+    }, 500);
 });
