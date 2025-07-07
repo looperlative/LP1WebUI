@@ -75,15 +75,6 @@ io.on('connection', (socket) => {
         socket.emit('device_not_found');
     }
 
-    // Handle client commands
-    socket.on('command', (cmd) => {
-        if (lpAddress) {
-            sendCommandToDevice(cmd);
-        } else {
-            socket.emit('device_error', 'No device connected');
-        }
-    });
-
     socket.on('disconnect', () => {
         console.log('Client disconnected');
     });
@@ -157,20 +148,6 @@ function sendCommandToDevice(cmd) {
     if (cmd === 'STATUS') {
         // Use the compact status format as it's more efficient
         xmlCmd = '<query>status compact</query>';
-    } else if (cmd.startsWith('TRACK_')) {
-        // Example: TRACK_1_LEVEL_50 -> <track><id>1</id><level>50</level></track>
-        const parts = cmd.split('_');
-        if (parts.length >= 4) {
-            const trackId = parts[1];
-            const param = parts[2].toLowerCase();
-            const value = parts[3];
-            xmlCmd = `<track><id>${trackId}</id><${param}>${value}</${param}></track>`;
-        } else {
-            xmlCmd = cmd; // Fallback
-        }
-    } else {
-        // Generic command format
-        xmlCmd = `<command>${cmd}</command>`;
     }
 
     const cmdBuffer = Buffer.from(xmlCmd, 'ascii');
@@ -184,13 +161,6 @@ function sendCommandToDevice(cmd) {
 // Parse IP status data received from the device
 function parseIPStatus(buffer) {
     try {
-        // First check if it's XML format (for backward compatibility)
-        const dataStr = buffer.toString('ascii', 0, Math.min(20, buffer.length));
-        if (dataStr.includes('<status>') || dataStr.includes('<track>')) {
-            parseXmlStatus(buffer);
-            return;
-        }
-
 	if (buffer[0] === 0xf0) {
 	    //console.warn("Unhandled Sysex packet received");
 	    return;
@@ -238,51 +208,6 @@ function parseIPStatus(buffer) {
         io.emit('status', lpStatus);
     } catch (err) {
         console.error('Error parsing status data:', err);
-    }
-}
-
-// Parse legacy XML status format
-function parseXmlStatus(buffer) {
-    try {
-        const data = buffer.toString('ascii');
-
-        // Extract track information if available
-        const trackMatches = data.match(/<track>(.*?)<\/track>/g);
-        if (trackMatches) {
-            trackMatches.forEach(trackXml => {
-                // Extract track ID
-                const idMatch = trackXml.match(/<id>(\d+)<\/id>/);
-                if (idMatch && idMatch[1]) {
-                    const trackId = parseInt(idMatch[1]) - 1; // 0-based index
-
-                    // Extract track parameters
-                    const levelMatch = trackXml.match(/<level>(-?\d+)<\/level>/);
-                    if (levelMatch && levelMatch[1]) {
-                        lpStatus.level[trackId] = parseInt(levelMatch[1]);
-                    }
-
-                    const panMatch = trackXml.match(/<pan>(-?\d+)<\/pan>/);
-                    if (panMatch && panMatch[1]) {
-                        lpStatus.pan[trackId] = parseInt(panMatch[1]);
-                    }
-
-                    const feedbackMatch = trackXml.match(/<feedback>(-?\d+)<\/feedback>/);
-                    if (feedbackMatch && feedbackMatch[1]) {
-                        lpStatus.feedback[trackId] = parseInt(feedbackMatch[1]);
-                    }
-
-                    const statusMatch = trackXml.match(/<status>(\d+)<\/status>/);
-                    if (statusMatch && statusMatch[1]) {
-                        lpStatus.status[trackId] = parseInt(statusMatch[1]);
-                    }
-                }
-            });
-        }
-
-        // Update status and notify clients
-        io.emit('status', lpStatus);
-    } catch (err) {
-        console.error('Error parsing XML status data:', err);
     }
 }
 

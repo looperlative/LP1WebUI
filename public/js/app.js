@@ -73,17 +73,6 @@ function initUI() {
     midiMsgNumber.addEventListener('change', handleMidiMsgNumberChange);
 }
 
-// Helper function to create a button
-function createButton(text, className, trackIndex, action) {
-    const button = document.createElement('button');
-    button.textContent = text;
-    button.className = `btn ${className} small`;
-    button.dataset.track = trackIndex;
-    button.dataset.action = action;
-    button.addEventListener('click', handleTrackButtonClick);
-    return button;
-}
-
 // Update the UI with the latest status
 function updateUI() {
     // Update track status and controls
@@ -212,30 +201,6 @@ function updateButtonConfigUI() {
 }
 
 // Event handlers
-function handleReadConfig() {
-    socket.emit('command', 'READ_CONFIG');
-    statusMessage.textContent = 'Reading configuration...';
-}
-
-function handleSaveConfig() {
-    socket.emit('command', 'SAVE_CONFIG');
-    statusMessage.textContent = 'Saving configuration...';
-}
-
-function handleLoadConfig() {
-    // This would typically open a file dialog
-    // For now, just send a command to load a default config
-    socket.emit('command', 'LOAD_CONFIG');
-    statusMessage.textContent = 'Loading configuration...';
-}
-
-function handleUpgrade() {
-    // This would typically open a file dialog
-    // For now, just send a command to initiate upgrade
-    socket.emit('command', 'UPGRADE');
-    statusMessage.textContent = 'Initiating upgrade...';
-}
-
 function handleMidiMsgTypeChange() {
     const selectedType = parseInt(midiMsgType.value);
     // Clear the message number dropdown and repopulate based on type
@@ -260,52 +225,6 @@ function handleMidiMsgTypeChange() {
 function handleMidiMsgNumberChange() {
     // Update button config UI
     updateButtonConfigUI();
-}
-
-function handleFunctionChange(event) {
-    const functionIndex = parseInt(event.target.dataset.index);
-    const functionValue = parseInt(event.target.value);
-    const selectedType = parseInt(midiMsgType.value);
-    const selectedNumber = parseInt(midiMsgNumber.value);
-    const btnIndex = selectedType * 128 + selectedNumber;
-
-    // Update local button config
-    buttonConfig[btnIndex][functionIndex] = functionValue;
-
-    // Send update to server
-    socket.emit('updateButtonConfig', {
-        btnIndex,
-        functionIndex,
-        value: functionValue
-    });
-}
-
-function handleTrackParamChange(event) {
-    const trackIndex = parseInt(event.target.dataset.track);
-    const param = event.target.dataset.param;
-    const value = parseInt(event.target.value);
-
-    // Update value display
-    const valueEl = document.getElementById(`track-${trackIndex}-${param}-value`);
-    if (valueEl) valueEl.textContent = value;
-
-    // Send command to server
-    socket.emit('trackParam', {
-        track: trackIndex,
-        param,
-        value
-    });
-}
-
-function handleTrackButtonClick(event) {
-    const trackIndex = parseInt(event.target.dataset.track);
-    const action = event.target.dataset.action;
-
-    // Send command to server
-    socket.emit('trackAction', {
-        track: trackIndex,
-        action
-    });
 }
 
 // Initialize the UI when the DOM is loaded
